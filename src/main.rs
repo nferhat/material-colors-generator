@@ -13,6 +13,15 @@ use ini_material_color_utilities_rs::{
 use anyhow::{Context, Result};
 
 pub trait RgbExt {
+    /// Brighten the color.
+    ///
+    /// What's the different between this and using `Hsl::lighten`?
+    ///
+    /// Using `Hsl::lighten` causes some slight color deviation towards the hue, I.E if you
+    /// darken (by using a negative) amount a color it will make it more saturated towards the
+    /// color hsl
+    ///
+    /// This function doesn't cause this.'
     fn brigthen(&mut self, amount: f64);
 }
 
@@ -32,7 +41,7 @@ struct Cli {
     #[command(subcommand)]
     pub source: SchemeSource,
 
-    /// What type of schemne you want to generate?
+    /// What type of scheme you want to generate?
     #[arg(
         value_enum,
         short,
@@ -57,7 +66,9 @@ struct Cli {
 
 #[derive(Clone, Debug, Subcommand)]
 enum SchemeSource {
+    /// Extract the source color from an image.
     Image { path: PathBuf },
+    /// Use this color as the source.
     Color { hex: String },
 }
 
@@ -73,13 +84,12 @@ fn main() -> Result<()> {
 
     let source_color = match cli.source {
         SchemeSource::Image { path } => {
-            // Alogirthm derived from:
+            // Algorithm derived from:
             // * https://github.com/end-4/dots-hyprland/blob/c8f83c2ba329fc426d8f3e439ac9648df7bdf695/.config/ags/scripts/color_generation/generate_colors_material.py#L52
-            // * https://github.com/InioX/matugen
             let image = image::open(path).context("Failed to open image!")?;
             let (width, height) = image.dimensions();
-            // Resize the image so that we dont get something huge with a gigantic color
-            // variety, causing widly different colorschemes
+            // Resize the image so that we don't get something huge with a gigantic color
+            // variety, causing widely different colorschemes
             let new_width = 64;
             let width_percent = new_width / width;
             let new_height = height * width_percent;
@@ -122,14 +132,16 @@ fn main() -> Result<()> {
         SchemeMode::Light => Scheme::light_from_core_palette(&mut core_palette),
     };
 
-    // FIXME: Stupid thing but I want a hashmap of everything, not fields of a struct.
-    // This will always be a O(n = 46 * 2) opeartion, though.
+    // FIXME: Stupid thing but I want a HashMap of everything, not fields of a struct.
+    // This will always be a O(n = 46 * 2) operation, though.
     let json_str = serde_json::to_string(&scheme).unwrap();
     let mut colors: HashMap<&str, Rgb> = serde_json::from_str::<HashMap<&str, String>>(&json_str)
         .unwrap()
         .into_iter()
         .map(|(k, v)| (k, Rgb::from_hex_str(&v).unwrap()))
         .collect();
+
+    // TODO: Read post-processing actions from a given file instead of hard coding them.
 
     // I feel like material UI backgrounds are always too bright?, maybe its me
     // I dim everything beforehand by a constant factor before actual modifications
