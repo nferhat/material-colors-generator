@@ -1,0 +1,15 @@
+[package]
+name = "material-colors-generator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.76"
+clap = { version = "4.4.11", features = ["derive"] }
+colorsys = "0.6.7"
+image = "0.24.7"
+ini-material-color-utilities-rs = { version = "0.5.0", features = ["clap", "serde"] }
+serde = { version = "1.0.193", features = ["derive"] }
+serde_json = "1.0.108"
